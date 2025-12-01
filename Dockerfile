@@ -1,6 +1,6 @@
 # Etapa 1: Construcción (Builder)
 # Usamos una imagen de Node.js para instalar dependencias y compilar el código TypeScript
-FROM node:18-alpine AS builder
+FROM node:20-alpine
 
 # Establecemos el directorio de trabajo dentro del contenedor
 WORKDIR /usr/src/app
@@ -17,7 +17,7 @@ RUN npm run build
 
 # Etapa 2: Producción (Production)
 # Usamos una imagen más ligera para ejecutar la aplicación ya compilada
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/node_modules ./node_modules
