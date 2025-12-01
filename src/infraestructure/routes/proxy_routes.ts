@@ -2,7 +2,24 @@ import { Router } from 'express';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import { MICROSERVICES } from '../../config/config';
 
+console.log('🔧 [Gateway] Configuración de microservicios:');
+console.log('   - Auth:', MICROSERVICES.auth);
+console.log('   - Social:', MICROSERVICES.social);
+console.log('   - Messaging:', MICROSERVICES.messaging);
+console.log('   - Notifications:', MICROSERVICES.notifications);
+
 const router = Router();
+
+const onProxyReq = (proxyReq: any, req: any, res: any) => {
+    console.log('🔄 [Gateway Proxy] Reenviando petición:');
+    console.log(`   - Método: ${req.method}`);
+    console.log(`   - URL original: ${req.originalUrl}`);
+    console.log(`   - Path: ${req.path}`);
+    console.log(`   - Destino: ${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`);
+
+    // Llamar a fixRequestBody para que funcione correctamente (solo acepta 2 parámetros)
+    fixRequestBody(proxyReq, req);
+};
 
 const onProxyRes = (proxyRes: any, req: any, res: any) => {
     console.log(
@@ -20,43 +37,47 @@ const onError = (err: any, req: any, res: any) => {
 };
 
 // Proxy para el servicio de Autenticación
+// Como router.use('/auth') elimina el prefijo, el path llega sin /auth
+// Por ejemplo: /api/auth/login llega como /login
 router.use('/auth', createProxyMiddleware({
     target: MICROSERVICES.auth,
     changeOrigin: true,
-    pathRewrite: (path, req) => {
-        const newPath = '/api/auth' + path;
-        console.log(`[Gateway] PathRewrite: ${path} -> ${newPath}`); 
-        return newPath;
+    pathRewrite: {
+        '^/': '/api/auth/'  // Reescribir /login -> /api/auth/login
     },
     on: {
-        proxyReq: fixRequestBody,
+        proxyReq: onProxyReq,
         proxyRes: onProxyRes,
         error: onError,
     }
 }));
 
 
-// Proxy para el servicio de Chat
-router.use('/chat', createProxyMiddleware({
-    target: MICROSERVICES.chat,
+// Proxy para el servicio de Messaging (Chat)
+router.use('/messaging', createProxyMiddleware({
+    target: MICROSERVICES.messaging,
     changeOrigin: true,
     pathRewrite: {
-        '^/api/chat': '',
+        '^/api/messaging': '/api/v1',
     },
     on: {
-        proxyReq: fixRequestBody,
+        proxyReq: onProxyReq,
+        proxyRes: onProxyRes,
+        error: onError,
     }
 }));
 
-// Proxy para el servicio de Publicaciones
-router.use('/posts', createProxyMiddleware({
-    target: MICROSERVICES.posts,
+// Proxy para el servicio de Social (Posts, Profiles, Communities)
+router.use('/social', createProxyMiddleware({
+    target: MICROSERVICES.social,
     changeOrigin: true,
     pathRewrite: {
-        '^/api/posts': '',
+        '^/api/social': '/api/v1',
     },
     on: {
-        proxyReq: fixRequestBody,
+        proxyReq: onProxyReq,
+        proxyRes: onProxyRes,
+        error: onError,
     }
 }));
 
@@ -65,10 +86,12 @@ router.use('/notifications', createProxyMiddleware({
     target: MICROSERVICES.notifications,
     changeOrigin: true,
     pathRewrite: {
-        '^/api/notifications': '',
+        '^/api/notifications': '/api/v1/notifications',
     },
     on: {
-        proxyReq: fixRequestBody,
+        proxyReq: onProxyReq,
+        proxyRes: onProxyRes,
+        error: onError,
     }
 }));
 
