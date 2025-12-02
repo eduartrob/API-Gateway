@@ -17,8 +17,15 @@ const onProxyReq = (proxyReq: any, req: any, res: any) => {
     console.log(`   - Path: ${req.path}`);
     console.log(`   - Destino: ${proxyReq.protocol}//${proxyReq.host}${proxyReq.path}`);
 
-    // Llamar a fixRequestBody para que funcione correctamente (solo acepta 2 parámetros)
-    fixRequestBody(proxyReq, req);
+    // ⚠️ IMPORTANTE: NO llamar fixRequestBody para multipart/form-data
+    // Solo para JSON (application/json)
+    const contentType = req.get('content-type') || '';
+
+    if (contentType.includes('application/json') && req.body) {
+        // Solo para JSON
+        fixRequestBody(proxyReq, req);
+    }
+    // Para multipart/form-data, dejar que el stream fluya naturalmente
 };
 
 const onProxyRes = (proxyRes: any, req: any, res: any) => {
@@ -68,12 +75,14 @@ router.use('/messaging', createProxyMiddleware({
 }));
 
 // Proxy para el servicio de Social (Posts, Profiles, Communities)
+// ✅ ARREGLADO: parseBodyMethods evita que Express parsee el body antes del proxy
 router.use('/social', createProxyMiddleware({
     target: MICROSERVICES.social,
     changeOrigin: true,
     pathRewrite: {
         '^/': '/api/v1/',
     },
+    parseBodyMethods: ['POST', 'PUT', 'PATCH'], // ✅ NO parsear body, dejar fluir el stream
     on: {
         proxyReq: onProxyReq,
         proxyRes: onProxyRes,
