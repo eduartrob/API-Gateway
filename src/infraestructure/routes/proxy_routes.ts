@@ -75,14 +75,13 @@ router.use('/messaging', createProxyMiddleware({
 }));
 
 // Proxy para el servicio de Social (Posts, Profiles, Communities)
-// ✅ ARREGLADO: parseBodyMethods evita que Express parsee el body antes del proxy
+// ✅ ARREGLADO: No llamar fixRequestBody para multipart, dejar que fluya naturalmente
 router.use('/social', createProxyMiddleware({
     target: MICROSERVICES.social,
     changeOrigin: true,
     pathRewrite: {
         '^/': '/api/v1/',
     },
-    parseBodyMethods: ['POST', 'PUT', 'PATCH'], // ✅ NO parsear body, dejar fluir el stream
     on: {
         proxyReq: onProxyReq,
         proxyRes: onProxyRes,
