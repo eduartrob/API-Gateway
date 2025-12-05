@@ -74,6 +74,21 @@ router.use('/messaging', createProxyMiddleware({
     }
 }));
 
+// Proxy para archivos estáticos (uploads) del servicio Social
+// ✅ IMPORTANTE: Debe ir ANTES del proxy genérico de /social
+router.use('/uploads', createProxyMiddleware({
+    target: MICROSERVICES.social,
+    changeOrigin: true,
+    pathRewrite: {
+        '^/uploads': '/uploads',  // Mantener el path /uploads
+    },
+    on: {
+        proxyReq: onProxyReq,
+        proxyRes: onProxyRes,
+        error: onError,
+    }
+}));
+
 // Proxy para el servicio de Social (Posts, Profiles, Communities)
 // ✅ ARREGLADO: No llamar fixRequestBody para multipart, dejar que fluya naturalmente
 router.use('/social', createProxyMiddleware({
