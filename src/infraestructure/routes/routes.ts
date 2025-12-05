@@ -11,15 +11,14 @@ router.get('/health', (req: Request, res: Response) => {
 });
 
 // ✅ Proxy para archivos estáticos (uploads) - ANTES de /api para que sea /uploads directamente
+// NOTA: router.use('/uploads') quita el prefijo /uploads, así que debemos re-agregarlo
 router.use('/uploads', createProxyMiddleware({
     target: MICROSERVICES.social,
     changeOrigin: true,
-    pathRewrite: {
-        '^/uploads': '/uploads',
-    },
+    pathRewrite: (path) => '/uploads' + path,  // Ej: /publications/img.jpg -> /uploads/publications/img.jpg
     on: {
         proxyReq: (proxyReq: any, req: any, res: any) => {
-            console.log(`🔄 [Gateway] Proxy upload: ${req.method} ${req.originalUrl}`);
+            console.log(`🔄 [Gateway] Proxy upload: ${req.method} /uploads${req.url}`);
         },
     },
 }));
