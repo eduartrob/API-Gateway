@@ -62,7 +62,8 @@ router.use('/auth', createProxyMiddleware({
 
 
 // 🔥 WebSocket proxy for Socket.io (messaging real-time)
-router.use('/socket.io', createProxyMiddleware({
+// Create as named variable so we can export it for upgrade handling
+const wsProxy = createProxyMiddleware({
     target: MICROSERVICES.messaging,
     changeOrigin: true,
     ws: true,  // Enable WebSocket proxying
@@ -72,7 +73,9 @@ router.use('/socket.io', createProxyMiddleware({
         },
         error: onError,
     }
-}));
+});
+
+router.use('/socket.io', wsProxy);
 
 // Proxy para el servicio de Messaging (Chat)
 router.use('/messaging', createProxyMiddleware({
@@ -135,4 +138,5 @@ router.use('/notifications', createProxyMiddleware({
 
 
 
+export { wsProxy };
 export default router;
