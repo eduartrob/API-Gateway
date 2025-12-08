@@ -36,9 +36,10 @@ const onProxyRes = (proxyRes: any, req: any, res: any) => {
 
 const onError = (err: any, req: any, res: any) => {
     console.error(
-        `[Gateway] Proxy ERROR: ${req.method} ${req.originalUrl} -> ${err.message}`
+        `[Gateway] Proxy ERROR: ${req?.method || 'WS'} ${req?.originalUrl || 'socket'} -> ${err.message}`
     );
-    if (!res.headersSent) {
+    // WebSocket errors don't have res.status, so check before calling
+    if (res && typeof res.status === 'function' && !res.headersSent) {
         res.status(502).json({ message: 'Error de conexión con el servicio (Bad Gateway).' });
     }
 };
