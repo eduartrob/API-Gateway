@@ -7,14 +7,16 @@ const startServer = () => {
   const server = http.createServer(app);
 
   // 🔥 Handle WebSocket upgrade for socket.io proxy
+  // ONLY for actual WebSocket connections (not polling)
   server.on('upgrade', (req, socket, head) => {
-    console.log('🔌 [Gateway] WebSocket upgrade request:', req.url);
-    if (req.url?.startsWith('/socket.io')) {
-      // URL already includes /socket.io, proxy directly
-      console.log('🔌 [Gateway] Forwarding WebSocket upgrade to messaging-service');
+    const url = req.url || '';
+
+    // Only handle if it's socket.io AND websocket transport
+    if (url.startsWith('/socket.io') && url.includes('transport=websocket')) {
+      console.log('🔌 [Gateway] WebSocket upgrade:', url);
       wsProxy.upgrade(req, socket as any, head);
     } else {
-      console.log('🔌 [Gateway] Unknown WebSocket path, ignoring:', req.url);
+      console.log('🔌 [Gateway] Non-WS upgrade ignored:', url);
     }
   });
 
