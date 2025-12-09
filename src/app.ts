@@ -10,6 +10,13 @@ import { wsProxy } from './infraestructure/routes/proxy_routes';
 
 const app = express();
 
+// 🔥 Socket.io proxy FIRST - before ALL other middlewares
+// Must bypass helmet, cors, and body parsers for proper WebSocket handling
+app.use('/socket.io', (req, res, next) => {
+    console.log(`🔌 [Socket.io Middleware] ${req.method} ${req.url}`);
+    next();
+}, wsProxy);
+
 app.use(helmet());
 
 const limiter = rateLimit({
@@ -20,8 +27,6 @@ const limiter = rateLimit({
     legacyHeaders: false,
 });
 
-// 🔥 Socket.io proxy BEFORE body parsers - critical for polling to work
-app.use('/socket.io', wsProxy);
 
 // app.use(limiter);
 app.use(cors());
