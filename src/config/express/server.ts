@@ -16,6 +16,13 @@ const startServer = () => {
       console.log('🔌 [Gateway] Socket error (handled):', err.message);
     });
 
+    // Set socket timeout for upgrade to prevent hanging connections
+    (socket as any).setTimeout(30000);
+    socket.on('timeout', () => {
+      console.log('🔌 [Gateway] Socket upgrade timeout');
+      socket.destroy();
+    });
+
     // Only handle actual websocket transport
     if (url.startsWith('/socket.io') && url.includes('transport=websocket')) {
       console.log('🔌 [Gateway] WebSocket upgrade:', url);
