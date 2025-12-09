@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 const xssClean = require('xss-clean');
 import mainRouter from './infraestructure/routes/routes';
+import { wsProxy } from './infraestructure/routes/proxy_routes';
 
 const app = express();
 
@@ -18,6 +19,9 @@ const limiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
+
+// 🔥 Socket.io proxy BEFORE body parsers - critical for polling to work
+app.use('/socket.io', wsProxy);
 
 // app.use(limiter);
 app.use(cors());
