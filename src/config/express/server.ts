@@ -11,13 +11,23 @@ const startServer = () => {
   server.on('upgrade', (req, socket, head) => {
     const url = req.url || '';
 
+    // Add error handler to prevent ECONNRESET crashes
+    socket.on('error', (err) => {
+      console.log('🔌 [Gateway] Socket error (handled):', err.message);
+    });
+
     // Only handle actual websocket transport
     if (url.startsWith('/socket.io') && url.includes('transport=websocket')) {
       console.log('🔌 [Gateway] WebSocket upgrade:', url);
       wsProxy.upgrade(req, socket as any, head);
     }
-    // Non-websocket requests reaching upgrade handler is unexpected
-    // Don't destroy - log and leave alone (may be handled by other listeners)
+    // For non-websocket, socket will timeout naturally (no explicit handling needed)
+  });
+
+  // Handle uncaught errors to prevent crashes
+  process.on('uncaughtException', (err) => {
+    console.error('🔴 [Gateway] Uncaught exception:', err.message);
+    // Don't exit - keep running
   });
 
   server.listen(PORT, () => {
