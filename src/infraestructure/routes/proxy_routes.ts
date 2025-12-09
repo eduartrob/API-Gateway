@@ -80,11 +80,21 @@ const wsProxy = createProxyMiddleware({
     },
     on: {
         proxyReq: (proxyReq: any, req: any, res: any) => {
-            console.log(`🔌 [Gateway WebSocket] Proxying HTTP: ${req.method} ${req.url}`);
+            console.log(`🔌 [wsProxy] Proxying: ${req.method} ${req.url}`);
+            console.log(`🔌 [wsProxy] Target: ${MICROSERVICES.messaging}`);
+            console.log(`🔌 [wsProxy] ProxyReq path: ${proxyReq.path}`);
         },
-        error: onError,
+        proxyRes: (proxyRes: any, req: any, res: any) => {
+            console.log(`🔌 [wsProxy] Response: ${proxyRes.statusCode} for ${req.url}`);
+        },
+        error: (err: any, req: any, res: any) => {
+            console.error(`🔌 [wsProxy] ERROR: ${err.code} - ${err.message}`);
+            console.error(`🔌 [wsProxy] Request: ${req.method} ${req.url}`);
+            onError(err, req, res);
+        },
     }
 });
+
 
 
 // Note: wsProxy is exported for use in app.ts and server.ts - don't add router.use here
